@@ -36,4 +36,4 @@ Simply deactivate and delete the plugin.
   
 == Changelog ==
 = 1.0 =
-* Plugin released. 
+* Plugin not released yet. 
