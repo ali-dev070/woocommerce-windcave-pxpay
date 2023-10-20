@@ -35,6 +35,8 @@ final class Woocommerce_windcave_pxpay2_init {
 		// called after all plugins have loaded
 		add_action( 'plugins_loaded', 				 array( $this, 'plugins_loaded' ) );
 
+		add_action( 'wp_ajax_GenerateRequest', array( $this, 'ilaa_windcave_GenerateRequest_callback' ) );
+
 		add_action( 'admin_enqueue_scripts', 		 array( $this, 'ilaa_windcave_pxpay2_register_plugin_scripts_and_styles' ) );
 
 	}
@@ -82,6 +84,21 @@ final class Woocommerce_windcave_pxpay2_init {
 		);
 
 	}
+
+
+	        /**
+         * CALLBACK functions below this line
+         */
+
+        /**
+         *  Method to handle AJAX calls 
+         *  This Method is called for getting GenerateRequest
+         */
+        public function ilaa_windcave_GenerateRequest_callback() {
+
+			echo 'ajax callback results';
+			
+        }
 
 }
 
