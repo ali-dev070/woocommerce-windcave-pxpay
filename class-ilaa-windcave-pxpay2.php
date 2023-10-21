@@ -211,8 +211,10 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
          */
         function ilaa_successful_request ($enc_hex) {
 
-            $PxPayUserId = $this->pxpay2userid;
-            $PxPayKey = $this->pxpay2apikey;
+            //$PxPayUserId = $this->pxpay2userid;
+            //$PxPayKey = $this->pxpay2apikey;
+            $PxPayUserId = 'WebNextLtd_REST_Dev';
+            $PxPayKey = '34fe19e53d68d38f7d43f8959004a32b4d9d93eadd803ca8babd081c63140623';
 
             $xml = new XMLWriter();
 			$xml->openMemory();
