@@ -28,6 +28,8 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
     		add_action( 'woocommerce_api_wc_ilaa_windcave_pxpay2', array( $this, 'ilaa_check_windcave_callback' ) );
             add_action( 'valid-windcave-callback', array($this, 'ilaa_successful_request') );
 
+            /* initiation of logging instance */
+    		$this->log = new WC_Logger();
         }
 
 
@@ -101,6 +103,7 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
             global $woocommerce;
             $order = new WC_Order($order_id);
 
+            $url = $this->pxpay2url;
             $PxPayUserId = $this->pxpay2userid;
             $PxPayKey = $this->pxpay2apikey;
 
@@ -127,8 +130,6 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
             $xml->writeElement('UrlCallback', get_site_url() . '/wc-api/WC_ilaa_windcave_pxpay2/');
 
 			$xml->endElement();		// GenerateRequest
-
-            $url = $this->pxpay2url;
             $data = $xml->outputMemory();
 
             /**
@@ -211,10 +212,11 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
          */
         function ilaa_successful_request ($enc_hex) {
 
-            //$PxPayUserId = $this->pxpay2userid;
-            //$PxPayKey = $this->pxpay2apikey;
-            $PxPayUserId = 'WebNextLtd_REST_Dev';
-            $PxPayKey = '34fe19e53d68d38f7d43f8959004a32b4d9d93eadd803ca8babd081c63140623';
+            $url = $this->pxpay2url;
+            $PxPayUserId = $this->pxpay2userid;
+            $PxPayKey = $this->pxpay2apikey;
+            //$PxPayUserId = 'WebNextLtd_REST_Dev';
+            //$PxPayKey = '34fe19e53d68d38f7d43f8959004a32b4d9d93eadd803ca8babd081c63140623';
 
             $xml = new XMLWriter();
 			$xml->openMemory();
@@ -226,8 +228,6 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
 			$xml->writeElement('Response', $enc_hex);
 
 			$xml->endElement();		// ProcessResponse
-
-            $url = $this->pxpay2url;
             $data = $xml->outputMemory();
 
             /**
@@ -245,6 +245,7 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
                 $order->payment_complete();
                 wc_reduce_stock_levels($order_id);
 
+                $this->log->add( 'pxpay2', $bodyArray );
                 // header( 'HTTP/1.1 200 OK' );
                 // echo $bodyArray['TxnId'];
                 // die;
