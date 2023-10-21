@@ -10,74 +10,28 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
          * @return void
          */
         public function __construct() {
+
             $this->id                 = 'ilaa_windcave_pxpay2';
             $this->icon               = '';
             $this->method_title       = __( 'Windcave PxPay 2.0 Method', 'ilaa-windcave-pxpay2' );
             $this->method_description = __( 'Windcave PxPay 2.0 method uses Windcave API to make payments.', 'ilaa-windcave-pxpay2' ); 
-
             $this->has_fields = false;
-            $this->title = $this->get_option('title');
-
             $this->enabled = true;
+
             $this->init();
+            $this->title = $this->get_option('title');
+            $this->pxpay2url = $this->get_option('pxpay2url');
+            $this->pxpay2userid = $this->get_option('pxpay2userid');
+            $this->pxpay2apikey = $this->get_option('pxpay2apikey');
 
             /* Hook IPN callback logic*/
     		add_action( 'woocommerce_api_wc_ilaa_windcave_pxpay2', array( $this, 'ilaa_check_windcave_callback' ) );
             add_action( 'valid-windcave-callback', array($this, 'ilaa_successful_request') );
 
+            /* initiation of logging instance */
+    		$this->log = new WC_Logger();
         }
 
-        function ilaa_check_windcave_callback() {
-            if ( isset($_REQUEST["userid"]) ) :
-                $uri  = explode('result=', $_SERVER['REQUEST_URI']);
-                $uri1 = $uri[1];
-                $uri2  = explode('&', $uri1);
-                $enc_hex = $uri2[0];
-    
-                do_action("valid-windcave-callback", $enc_hex);
-            endif;
-        }
-    
-        function ilaa_successful_request ($enc_hex) {
-
-            $PxPayUserId = 'WebNextLtd_REST_Dev';
-            $PxPayKey = '34fe19e53d68d38f7d43f8959004a32b4d9d93eadd803ca8babd081c63140623';
-
-            $xml = new XMLWriter();
-			$xml->openMemory();
-			$xml->startDocument('1.0', 'UTF-8');
-			$xml->startElement('ProcessResponse');
-
-			$xml->writeElement('PxPayUserId', $PxPayUserId);
-			$xml->writeElement('PxPayKey', $PxPayKey);
-			$xml->writeElement('Response', $enc_hex);
-
-			$xml->endElement();		// ProcessResponse
-
-            $url = 'https://sec.windcave.com/pxaccess/pxpay.aspx';
-            $data = $xml->outputMemory();
-
-            /**
-             * Getting paxpay 2.0 payment uri from server
-             */
-            $pxpay2_result = $this->get_windcave_pxpay2_response($url, $data);
-            $simpleXML = simplexml_load_string($pxpay2_result);
-
-            // Convert the SimpleXMLElement object to an array.
-            $bodyArray = json_decode(json_encode($simpleXML), true);
-            if( $bodyArray['ResponseText'] == 'APPROVED' ){
-                $order_id = $bodyArray['TxnId'];
-                $order = wc_get_order( $order_id );
-
-                $order->payment_complete();
-                wc_reduce_stock_levels($order_id);
-
-                // header( 'HTTP/1.1 200 OK' );
-                // echo $bodyArray['TxnId'];
-                // die;
-            }
-
-        }
 
         /**
          * Init settings
@@ -105,36 +59,60 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
          */
         function init_form_fields() {
             $this->form_fields = array(
-                'title' => array(
+                'enabled' => array(
+                    'title' => __('Enable', 'ilaa-windcave-pxpay2'),
+                    'type' => 'checkbox',
+                    'label' => __('Enable Windcave PxPay 2.0', 'ilaa-windcave-pxpay2'),
+                    'default' => 'yes'
+                ),'title' => array(
                     'title' => __('Title', 'ilaa-windcave-pxpay2'),
                     'type' => 'text',
                     'default' => __('Windcave PxPay 2.0', 'ilaa-windcave-pxpay2'),
                     'description' => __('This is the title customer see during checkout.', 'ilaa-windcave-pxpay2'),
                     'desc_tip' => true,
                 ),
-                'enabled' => array(
-                    'title' => __('Enable', 'ilaa-windcave-pxpay2'),
-                    'type' => 'checkbox',
-                    'label' => __('Enable Windcave PxPay 2.0', 'ilaa-windcave-pxpay2'),
-                    'default' => 'yes'
+                'pxpay2url' => array(
+                    'title' => __('PxPay 2.0 API URL', 'ilaa-windcave-pxpay2'),
+                    'type' => 'text',
+                    'default' => 'https://sec.windcave.com/pxaccess/pxpay.aspx',
+                    'description' => __('This is the API URL for Windcave.', 'ilaa-windcave-pxpay2'),
+                    'desc_tip' => true,
                 ),
-                'test_button' => array(
-                    'title' => 'test button',
-                    'type' => 'button',
-                    'label' => 'Test'
-                )
+                'pxpay2userid' => array(
+                    'title' => __('PxPay 2.0 User ID', 'ilaa-windcave-pxpay2'),
+                    'type' => 'text',
+                    'default' => '',
+                    'description' => __('This is the user id for Windcave API', 'ilaa-windcave-pxpay2'),
+                    'desc_tip' => true,
+                ),
+                'pxpay2apikey' => array(
+                    'title' => __('PxPay 2.0 API Key', 'ilaa-windcave-pxpay2'),
+                    'type' => 'text',
+                    'default' => '',
+                    'description' => __('This is the API key for Windcave API.', 'ilaa-windcave-pxpay2'),
+                    'desc_tip' => true,
+                ),
             );
         }
 
         /**
-         * Function to redirect customer to the payment gateway.
+         * Function to redirect customer to the payment gateway, and
+         * puts the order on hold.
          */
         function process_payment( $order_id ){
             global $woocommerce;
             $order = new WC_Order($order_id);
 
-            $PxPayUserId = 'WebNextLtd_REST_Dev';
-            $PxPayKey = '34fe19e53d68d38f7d43f8959004a32b4d9d93eadd803ca8babd081c63140623';
+            $url = $this->pxpay2url;
+            $PxPayUserId = $this->pxpay2userid;
+            $PxPayKey = $this->pxpay2apikey;
+
+            $currency = "";
+            if( function_exists ( "get_woocommerce_currency" ) ){
+                $currency = get_woocommerce_currency(); 
+            } else {
+                $currency = $this->get_option('woocommerce_currency');
+            }
 
             $xml = new XMLWriter();
 			$xml->openMemory();
@@ -145,15 +123,13 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
 			$xml->writeElement('PxPayKey', $PxPayKey);
 			$xml->writeElement('TxnType', 'Purchase');
 			$xml->writeElement('TxnId', $order_id);
-			$xml->writeElement('AmountInput', number_format(12.15, 2, '.', ''));
-			$xml->writeElement('CurrencyInput', 'NZD');
+			$xml->writeElement('AmountInput', number_format($order->order_total, 2, '.', ''));
+			$xml->writeElement('CurrencyInput', $currency);
 			$xml->writeElement('UrlSuccess', $this->get_return_url($order));
 			$xml->writeElement('UrlFail', $this->get_return_url($order));
             $xml->writeElement('UrlCallback', get_site_url() . '/wc-api/WC_ilaa_windcave_pxpay2/');
 
 			$xml->endElement();		// GenerateRequest
-
-            $url = 'https://sec.windcave.com/pxaccess/pxpay.aspx';
             $data = $xml->outputMemory();
 
             /**
@@ -178,6 +154,10 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
             }
         }
 
+        /**
+         * Following functions connect to Windcave API to retrieve URI for customer and
+         * translate the response after the customer completes payment process. 
+         */
         function get_windcave_pxpay2_uri($url, $xmlData){
 
             $response = wp_remote_post($url, array(
@@ -209,5 +189,71 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
 			}
         }
  
+        /**
+         * Following two functions handle the callback from the windcave servers after the transaction 
+         * process (success/failure).
+         */
+
+        /** Receives the response back from Windcave servers after payment is submitted. */
+        function ilaa_check_windcave_callback() {
+            if ( isset($_REQUEST["userid"]) ) :
+                $uri  = explode('result=', $_SERVER['REQUEST_URI']);
+                $uri1 = $uri[1];
+                $uri2  = explode('&', $uri1);
+                $enc_hex = $uri2[0];
+    
+                do_action("valid-windcave-callback", $enc_hex);
+            endif;
+        }
+    
+        /** 
+         * Based on the results received from Windcave servers, changes the order to complete/processing if the
+         * payment is approved.
+         */
+        function ilaa_successful_request ($enc_hex) {
+
+            $url = $this->pxpay2url;
+            $PxPayUserId = $this->pxpay2userid;
+            $PxPayKey = $this->pxpay2apikey;
+            //$PxPayUserId = 'WebNextLtd_REST_Dev';
+            //$PxPayKey = '34fe19e53d68d38f7d43f8959004a32b4d9d93eadd803ca8babd081c63140623';
+
+            $xml = new XMLWriter();
+			$xml->openMemory();
+			$xml->startDocument('1.0', 'UTF-8');
+			$xml->startElement('ProcessResponse');
+
+			$xml->writeElement('PxPayUserId', $PxPayUserId);
+			$xml->writeElement('PxPayKey', $PxPayKey);
+			$xml->writeElement('Response', $enc_hex);
+
+			$xml->endElement();		// ProcessResponse
+            $data = $xml->outputMemory();
+
+            /**
+             * Getting paxpay 2.0 payment uri from server
+             */
+            $pxpay2_result = $this->get_windcave_pxpay2_response($url, $data);
+            $simpleXML = simplexml_load_string($pxpay2_result);
+
+            // Convert the SimpleXMLElement object to an array.
+            $bodyArray = json_decode(json_encode($simpleXML), true);
+            if( $bodyArray['ResponseText'] == 'APPROVED' ){
+                $order_id = $bodyArray['TxnId'];
+                $order = wc_get_order( $order_id );
+
+                $order->payment_complete();
+                wc_reduce_stock_levels($order_id);
+
+                //$this->log->add( 'pxpay2', $bodyArray );
+                // header( 'HTTP/1.1 200 OK' );
+                // echo $bodyArray['TxnId'];
+                // die;
+            }
+            $this->log->add( 'pxpay2', $bodyArray );
+
+        }
+
+
     }
 }
