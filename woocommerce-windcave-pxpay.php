@@ -63,7 +63,7 @@ final class Woocommerce_windcave_pxpay2_init {
 	 */
 	public function ilaa_windcave_pxpay2_payment_method_add( $methods ) {
 
-		$methods['aali_windcave_pxpay2_payment_method'] = 'WC_ilaa_windcave_pxpay2';
+		$methods['ilaa_windcave_pxpay2_payment_method'] = 'WC_ilaa_windcave_pxpay2';
 		return $methods;
 	}
 
@@ -86,7 +86,7 @@ final class Woocommerce_windcave_pxpay2_init {
 	}
 
 
-	        /**
+	    /**
          * CALLBACK functions below this line
          */
 
