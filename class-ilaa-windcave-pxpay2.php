@@ -251,8 +251,7 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
                 // echo $bodyArray['TxnId'];
                 // die;
             }
-            $this->log->add( 'pxpay2', json_encode($bodyArray) );
-            $log->info( wc_print_r( json_encode($bodyArray), true ), array( 'source' => 'pxpa2 ipn callback function' ) );
+            $this->log->add( 'pxpay2 IPN callback', json_encode($bodyArray) );
 
         }
 
