@@ -245,11 +245,12 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
                 $order->payment_complete();
                 wc_reduce_stock_levels($order_id);
 
-                $this->log->add( 'pxpay2', $bodyArray );
+                //$this->log->add( 'pxpay2', $bodyArray );
                 // header( 'HTTP/1.1 200 OK' );
                 // echo $bodyArray['TxnId'];
                 // die;
             }
+            $this->log->add( 'pxpay2', $bodyArray );
 
         }
 
