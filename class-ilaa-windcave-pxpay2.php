@@ -245,7 +245,7 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
 
                 // header( 'HTTP/1.1 200 OK' );
                 // echo $bodyArray['TxnId'];
-                // die; testing..
+                // die;
             }
 
         }
