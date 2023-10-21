@@ -129,6 +129,8 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
 			$xml->writeElement('UrlSuccess', $this->get_return_url($order));
 			$xml->writeElement('UrlFail', $this->get_return_url($order));
             $xml->writeElement('UrlCallback', get_site_url() . '/wc-api/WC_ilaa_windcave_pxpay2/');
+            
+            $xml->writeElement('TxnData1', get_site_url() . '/wc-api/WC_ilaa_windcave_pxpay2/');
 
 			$xml->endElement();		// GenerateRequest
             $data = $xml->outputMemory();
