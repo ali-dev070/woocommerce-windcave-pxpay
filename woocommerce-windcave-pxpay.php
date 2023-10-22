@@ -61,10 +61,10 @@ final class Woocommerce_windcave_pxpay2_init {
 	/**
 	 * Registering the plugin backend class to woocommerce payment methods.
 	 */
-	public function ilaa_windcave_pxpay2_payment_method_add( $methods ) {
+	public function ilaa_windcave_pxpay2_payment_method_add( $gateways ) {
 
-		$methods['ilaa_windcave_pxpay2_payment_method'] = 'WC_ilaa_windcave_pxpay2';
-		return $methods;
+		$gateways[] = 'WC_ilaa_windcave_pxpay2';
+		return $gateways;
 	}
 
 

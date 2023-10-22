@@ -1,7 +1,6 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) {exit;} /* Exit if accessed directly */
 
-if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
     class WC_ilaa_windcave_pxpay2 extends WC_Payment_Gateway {
         /**
          * Constructor for Windcave PxPay2 class
@@ -11,7 +10,7 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
          */
         public function __construct() {
 
-            $this->id                 = 'ilaa_windcave_pxpay2';
+            $this->id                 = 'wc_ilaa_windcave_pxpay2';
             $this->icon               = '';
             $this->method_title       = __( 'Windcave PxPay 2.0 Method', 'ilaa-windcave-pxpay2' );
             $this->method_description = __( 'Windcave PxPay 2.0 method uses Windcave API to make payments.', 'ilaa-windcave-pxpay2' ); 
@@ -25,7 +24,9 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
             $this->pxpay2apikey = $this->get_option('pxpay2apikey');
 
             /* Hook IPN callback logic*/
-    		add_action( 'woocommerce_api_wc_ilaa_windcave_pxpay2', array( $this, 'ilaa_check_windcave_callback' ) );
+            
+    		add_action( 'woocommerce_api_' . $this->id, array( $this, 'ilaa_check_windcave_callback' ) );
+            //add_action( 'woocommerce_api_wc_ilaa_windcave_pxpay2', array( $this, 'ilaa_check_windcave_callback' ) );
             add_action( 'valid-windcave-callback', array($this, 'ilaa_successful_request') );
 
             /* initiation of logging instance */
@@ -124,12 +125,14 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
 			$xml->writeElement('PxPayKey', $PxPayKey);
 			$xml->writeElement('TxnType', 'Purchase');
 			$xml->writeElement('TxnId', $order_id);
-			$xml->writeElement('AmountInput', number_format($order->order_total, 2, '.', ''));
+			$xml->writeElement('AmountInput', number_format($order->get_total(), 2, '.', ''));
 			$xml->writeElement('CurrencyInput', $currency);
 			$xml->writeElement('UrlSuccess', $this->get_return_url($order));
 			$xml->writeElement('UrlFail', $this->get_return_url($order));
             $xml->writeElement('UrlCallback', get_site_url() . '/wc-api/WC_ilaa_windcave_pxpay2/');
             
+            
+
             $xml->writeElement('TxnData1', get_site_url() . '/wc-api/WC_ilaa_windcave_pxpay2/');
 
 			$xml->endElement();		// GenerateRequest
@@ -199,12 +202,16 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
 
         /** Receives the response back from Windcave servers after payment is submitted. */
         function ilaa_check_windcave_callback() {
+            
+            $this->log->add( 'pxpay2 IPN callback 0', "inside ilaa_check_windcave_callback()" );
             if ( isset($_REQUEST["userid"]) ) :
                 $uri  = explode('result=', $_SERVER['REQUEST_URI']);
                 $uri1 = $uri[1];
                 $uri2  = explode('&', $uri1);
                 $enc_hex = $uri2[0];
     
+                $this->log->add( 'pxpay2 IPN callback', json_encode($enc_hex) );
+                
                 do_action("valid-windcave-callback", $enc_hex);
             endif;
         }
@@ -214,6 +221,8 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
          * payment is approved.
          */
         function ilaa_successful_request ($enc_hex) {
+
+            $this->log->add( 'pxpay2 IPN callback 1', json_encode($enc_hex) );
 
             $url = $this->pxpay2url;
             $PxPayUserId = $this->pxpay2userid;
@@ -253,10 +262,9 @@ if ( ! class_exists( 'WC_ilaa_windcave_pxpay2' ) ) {
                 // echo $bodyArray['TxnId'];
                 // die;
             }
-            $this->log->add( 'pxpay2 IPN callback', json_encode($bodyArray) );
+            $this->log->add( 'pxpay2 IPN callback 2', json_encode($bodyArray) );
 
         }
 
 
     }
-}
