@@ -24,9 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {exit;} /* Exit if accessed directly */
             $this->pxpay2apikey = $this->get_option('pxpay2apikey');
 
             /* Hook IPN callback logic*/
-            
     		add_action( 'woocommerce_api_' . $this->id, array( $this, 'ilaa_check_windcave_callback' ) );
-            //add_action( 'woocommerce_api_wc_ilaa_windcave_pxpay2', array( $this, 'ilaa_check_windcave_callback' ) );
             add_action( 'valid-windcave-callback', array($this, 'ilaa_successful_request') );
 
             /* initiation of logging instance */
@@ -48,8 +46,6 @@ if ( ! defined( 'ABSPATH' ) ) {exit;} /* Exit if accessed directly */
 
             // Save settings in admin.
             add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
-
-
 
         }
 
@@ -130,10 +126,6 @@ if ( ! defined( 'ABSPATH' ) ) {exit;} /* Exit if accessed directly */
 			$xml->writeElement('UrlSuccess', $this->get_return_url($order));
 			$xml->writeElement('UrlFail', $this->get_return_url($order));
             $xml->writeElement('UrlCallback', get_site_url() . '/wc-api/WC_ilaa_windcave_pxpay2/');
-            
-            
-
-            $xml->writeElement('TxnData1', get_site_url() . '/wc-api/WC_ilaa_windcave_pxpay2/');
 
 			$xml->endElement();		// GenerateRequest
             $data = $xml->outputMemory();
@@ -203,14 +195,11 @@ if ( ! defined( 'ABSPATH' ) ) {exit;} /* Exit if accessed directly */
         /** Receives the response back from Windcave servers after payment is submitted. */
         function ilaa_check_windcave_callback() {
             
-            $this->log->add( 'pxpay2 IPN callback 0', "inside ilaa_check_windcave_callback()" );
             if ( isset($_REQUEST["userid"]) ) :
                 $uri  = explode('result=', $_SERVER['REQUEST_URI']);
                 $uri1 = $uri[1];
                 $uri2  = explode('&', $uri1);
                 $enc_hex = $uri2[0];
-    
-                $this->log->add( 'pxpay2 IPN callback', json_encode($enc_hex) );
                 
                 do_action("valid-windcave-callback", $enc_hex);
             endif;
@@ -221,8 +210,6 @@ if ( ! defined( 'ABSPATH' ) ) {exit;} /* Exit if accessed directly */
          * payment is approved.
          */
         function ilaa_successful_request ($enc_hex) {
-
-            $this->log->add( 'pxpay2 IPN callback 1', json_encode($enc_hex) );
 
             $url = $this->pxpay2url;
             $PxPayUserId = $this->pxpay2userid;
@@ -257,12 +244,13 @@ if ( ! defined( 'ABSPATH' ) ) {exit;} /* Exit if accessed directly */
                 $order->payment_complete();
                 wc_reduce_stock_levels($order_id);
 
-                //$this->log->add( 'pxpay2', $bodyArray );
                 // header( 'HTTP/1.1 200 OK' );
                 // echo $bodyArray['TxnId'];
                 // die;
+                $this->log->add( 'pxpay2 IPN callback 2', "Payment was approved!" );
+            } else {
+                $this->log->add( 'pxpay2 IPN callback 2', "Payment was not approved, something wrong happened!" );
             }
-            $this->log->add( 'pxpay2 IPN callback 2', json_encode($bodyArray) );
 
         }
 
