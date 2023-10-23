@@ -37,7 +37,7 @@ if (in_array( $plugin_path, wp_get_active_and_valid_plugins() ) || in_array( $pl
 		private static $instance = null;
 
 		public static function initialize() {
-			if ( is_null( self::$instance ) ){
+			if ( is_null( self::$instance ) ) {
 				self::$instance = new self();
 			}
 
@@ -47,11 +47,11 @@ if (in_array( $plugin_path, wp_get_active_and_valid_plugins() ) || in_array( $pl
 		public function __construct() {
 			
 			// called after all plugins have loaded
-			add_action( 'plugins_loaded', 				 array( $this, 'plugins_loaded' ) );
+			add_action( 'plugins_loaded', array( $this, 'plugins_loaded' ) );
 
 			add_action( 'wp_ajax_GenerateRequest', array( $this, 'ilaa_windcave_GenerateRequest_callback' ) );
 
-			add_action( 'admin_enqueue_scripts', 		 array( $this, 'ilaa_windcave_pxpay2_register_plugin_scripts_and_styles' ) );
+			add_action( 'admin_enqueue_scripts', array( $this, 'ilaa_windcave_pxpay2_register_plugin_scripts_and_styles' ) );
 
 		}
 

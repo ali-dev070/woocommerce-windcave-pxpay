@@ -1,13 +1,15 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) {exit;} /* Exit if accessed directly */
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+} /* Exit if accessed directly */
 
 class WC_Ilaa_Windcave_Pxpay2 extends WC_Payment_Gateway {
 
 	/**
 	 * Constructor for Windcave PxPay2 class
 	 *
-	 * access public
-	 * return void
+	 * Access public
+	 * Return void
 	 */
 	public function __construct() {
 
@@ -37,8 +39,8 @@ class WC_Ilaa_Windcave_Pxpay2 extends WC_Payment_Gateway {
 	/**
 	 * Init settings
 	 *
-	 * @access public
-	 * @return void
+	 * Access public
+	 * Return void
 	 */
 	public function init() {
 
@@ -54,8 +56,8 @@ class WC_Ilaa_Windcave_Pxpay2 extends WC_Payment_Gateway {
 	/**
 	 * Init admin form fields
 	 * 
-	 * access public
-	 * return void
+	 * Access public
+	 * Return void
 	 */
 	public function init_form_fields() {
 
@@ -100,7 +102,7 @@ class WC_Ilaa_Windcave_Pxpay2 extends WC_Payment_Gateway {
 	 * Function to redirect customer to the payment gateway, and
 	 * puts the order on hold.
 	 */
-	public function process_payment( $order_id ){
+	public function process_payment ( $order_id ) {
 
 		global $woocommerce;
 		$order = new WC_Order($order_id);
@@ -139,7 +141,7 @@ class WC_Ilaa_Windcave_Pxpay2 extends WC_Payment_Gateway {
 		 */
 		$pxpay2_URI = $this->get_windcave_pxpay2_uri($url, $data);
 
-		if ($pxpay2_URI != 'ERROR') {
+		if ( 'ERROR' != $pxpay2_URI ) {
 			// Mark the order on-hold untill order is paid.
 			$order->update_status('on-hold', __('Awaiting payment through PxPay 2.0', 'woocommerce-windcave-pxpay'));
 			$woocommerce->cart->empty_cart();
@@ -166,7 +168,7 @@ class WC_Ilaa_Windcave_Pxpay2 extends WC_Payment_Gateway {
 			'body' => $xmlData,
 		));
 
-		if (!is_wp_error($response) && $response['response']['code'] == 200) {
+		if (!is_wp_error($response) && 200 == $response['response']['code']) {
 
 			$simpleXML = simplexml_load_string($response['body']);
 
@@ -178,13 +180,13 @@ class WC_Ilaa_Windcave_Pxpay2 extends WC_Payment_Gateway {
 		}
 	}
 
-	public function get_windcave_pxpay2_response($url, $xmlData){
+	public function get_windcave_pxpay2_response ($url, $xmlData) {
 
 		$response = wp_remote_post($url, array(
 			'body' => $xmlData,
 		));
 
-		if (!is_wp_error($response) && $response['response']['code'] === 200) {
+		if (!is_wp_error($response) && 200 == $response['response']['code'] ) {
 			return $response['body'];
 		} else {
 			return 'ERROR';
@@ -199,13 +201,13 @@ class WC_Ilaa_Windcave_Pxpay2 extends WC_Payment_Gateway {
 	/** Receives the response back from Windcave servers after payment is submitted. */
 	public function ilaa_check_windcave_callback() {
 		
-		if ( isset($_REQUEST['userid']) ) :
-			$uri  = explode('result=', $_SERVER['REQUEST_URI']);
+		if ( isset($_REQUEST['userid']) && isset($_SERVER['REQUEST_URI']) ) :
+			$uri  = explode('result=', sanitize_url( $_SERVER['REQUEST_URI'] ));
 			$uri1 = $uri[1];
 			$uri2  = explode('&', $uri1);
 			$enc_hex = $uri2[0];
 			
-			do_action("valid-windcave-callback", $enc_hex);
+			do_action('valid-windcave-callback', $enc_hex);
 		endif;
 	}
 
@@ -241,7 +243,7 @@ class WC_Ilaa_Windcave_Pxpay2 extends WC_Payment_Gateway {
 
 		// Convert the SimpleXMLElement object to an array.
 		$bodyArray = json_decode(json_encode($simpleXML), true);
-		if( $bodyArray['ResponseText'] == 'APPROVED' ){
+		if ( 'APPROVED' == $bodyArray['ResponseText'] ) {
 			$order_id = $bodyArray['TxnId'];
 			$order = wc_get_order( $order_id );
 
@@ -251,9 +253,9 @@ class WC_Ilaa_Windcave_Pxpay2 extends WC_Payment_Gateway {
 			// header( 'HTTP/1.1 200 OK' );
 			// echo $bodyArray['TxnId'];
 			// die;
-			$this->log->add( 'pxpay2 IPN callback 2', "Payment was approved!" );
+			$this->log->add( 'pxpay2 IPN callback 2', 'Payment was approved!' );
 		} else {
-			$this->log->add( 'pxpay2 IPN callback 2', "Payment was not approved, something wrong happened!" );
+			$this->log->add( 'pxpay2 IPN callback 2', 'Payment was not approved, something wrong happened!' );
 		}
 
 	}
