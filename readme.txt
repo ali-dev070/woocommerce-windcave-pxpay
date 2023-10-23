@@ -5,7 +5,7 @@ Tags: Woocommerce Windcave Pxpay Payment Gateway
 Requires at least: 6.3
 Tested up to: 6.3.1
 Stable tag: 1.0
-License: Commercial
+License: GPLv3 or later License
 License URI: http://
   
 A WordPress plugin to use Windcave payment gateway pxpay in Woocommerce stores. 
