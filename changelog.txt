@@ -1,4 +1,4 @@
-*** WooCommerce Windcave PxPay 2.0 Gateway Changelog ***
+*** WooCommerce Windcave PxPay 2.0 Gateway Changelog***
 
 2023-10-23 - version 1.0.0
  * Initial release!
